@@ -1,0 +1,13 @@
+# Secure Environment Variables
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Virtual Environments
+venv/
+env/
+
+# Mac OS junk files
+.DS_Store
