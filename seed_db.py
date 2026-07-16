@@ -17,7 +17,11 @@ def seed_enterprise_database():
         database="industrial_asset_tracker",
         ssl_verify_cert=True,
         ssl_verify_identity=True,
-        ssl_ca=certifi.where() 
+        ssl_ca=certifi.where(),
+        # --- NEW: Aggressive Cloud Timeouts ---
+        connection_timeout=10,
+        read_timeout=10,
+        write_timeout=10
     )
     cursor = conn.cursor()
 
@@ -95,34 +99,49 @@ def seed_enterprise_database():
     # Scramble the arrival order
     random.shuffle(mock_assets)
     
-    # 6. Insert Assets row-by-row to map their unique engineering specs
+    print("Initiating Cloud Sync... (This may take 1-3 minutes depending on network speed)")
+    
+    # 6. Insert Assets row-by-row and micro-batch to prevent cloud timeouts
+    count = 0
     for asset in mock_assets:
-        cursor.execute("INSERT INTO assets (plant_id, name, asset_type, status) VALUES (%s, %s, %s, %s)", asset)
-        new_asset_id = cursor.lastrowid
-        a_type = asset[2]
-        
-        # Inject standard mock engineering values based on the equipment type
-        if a_type == "Motor":
-            cursor.execute("INSERT INTO motors (asset_id, v_input, output_power_kw, power_factor, phases, rpm, frequency, insulation_class, fire_protection) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (new_asset_id, 415, 75.0, 0.85, 3, 1500, 50, "Class F", "Ex d"))
-        elif a_type == "Transformer":
-            cursor.execute("INSERT INTO transformers (asset_id, kva_rating, voltage_rating, frequency, phases, insulation_class, vector_group) VALUES (%s, %s, %s, %s, %s, %s, %s)", (new_asset_id, 500.0, "11kV/415V", 50, 3, "Class A", "Dyn11"))
-        elif a_type == "Pump":
-            cursor.execute("INSERT INTO pumps (asset_id, flow_rate_m3h, head_pressure_bar) VALUES (%s, %s, %s)", (new_asset_id, 120.5, 15.0))
-        elif a_type == "Generator":
-            cursor.execute("INSERT INTO generators (asset_id, power_output_mw, voltage_kv) VALUES (%s, %s, %s)", (new_asset_id, 2.5, 11.0))
-        elif a_type == "Fan":
-            cursor.execute("INSERT INTO fans (asset_id, airflow_cfm, static_pressure_pa) VALUES (%s, %s, %s)", (new_asset_id, 5000.0, 250.0))
-        elif a_type == "Boiler":
-            cursor.execute("INSERT INTO boilers (asset_id, pressure_capacity_bar, max_temp_c) VALUES (%s, %s, %s)", (new_asset_id, 45.0, 450.0))
-        elif a_type == "Compressor":
-            cursor.execute("INSERT INTO compressors (asset_id, max_pressure_bar, flow_rate_m3h) VALUES (%s, %s, %s)", (new_asset_id, 10.0, 350.0))
-        elif a_type == "Machinery":
-            cursor.execute("INSERT INTO machinery (asset_id, operating_hours, maintenance_interval_days) VALUES (%s, %s, %s)", (new_asset_id, 1200, 180))
+        try:
+            cursor.execute("INSERT INTO assets (plant_id, name, asset_type, status) VALUES (%s, %s, %s, %s)", asset)
+            new_asset_id = cursor.lastrowid
+            a_type = asset[2]
+            
+            # Inject standard mock engineering values based on the equipment type
+            if a_type == "Motor":
+                cursor.execute("INSERT INTO motors (asset_id, v_input, output_power_kw, power_factor, phases, rpm, frequency, insulation_class, fire_protection) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (new_asset_id, 415, 75.0, 0.85, 3, 1500, 50, "Class F", "Ex d"))
+            elif a_type == "Transformer":
+                cursor.execute("INSERT INTO transformers (asset_id, kva_rating, voltage_rating, frequency, phases, insulation_class, vector_group) VALUES (%s, %s, %s, %s, %s, %s, %s)", (new_asset_id, 500.0, "11kV/415V", 50, 3, "Class A", "Dyn11"))
+            elif a_type == "Pump":
+                cursor.execute("INSERT INTO pumps (asset_id, flow_rate_m3h, head_pressure_bar) VALUES (%s, %s, %s)", (new_asset_id, 120.5, 15.0))
+            elif a_type == "Generator":
+                cursor.execute("INSERT INTO generators (asset_id, power_output_mw, voltage_kv) VALUES (%s, %s, %s)", (new_asset_id, 2.5, 11.0))
+            elif a_type == "Fan":
+                cursor.execute("INSERT INTO fans (asset_id, airflow_cfm, static_pressure_pa) VALUES (%s, %s, %s)", (new_asset_id, 5000.0, 250.0))
+            elif a_type == "Boiler":
+                cursor.execute("INSERT INTO boilers (asset_id, pressure_capacity_bar, max_temp_c) VALUES (%s, %s, %s)", (new_asset_id, 45.0, 450.0))
+            elif a_type == "Compressor":
+                cursor.execute("INSERT INTO compressors (asset_id, max_pressure_bar, flow_rate_m3h) VALUES (%s, %s, %s)", (new_asset_id, 10.0, 350.0))
+            elif a_type == "Machinery":
+                cursor.execute("INSERT INTO machinery (asset_id, operating_hours, maintenance_interval_days) VALUES (%s, %s, %s)", (new_asset_id, 1200, 180))
+            
+            count += 1
+            
+            # Save to the cloud every 50 rows to prevent pipe clogging
+            if count % 50 == 0:
+                conn.commit()
+                print(f"[{count}/5000] assets successfully synced to TiDB...", flush=True)
 
+        except Exception as e:
+            print(f"Network error at asset {count}. Error: {e}")
+            conn.rollback() 
+            break 
+
+    # Final commit for any remaining rows
     conn.commit()
-    cursor.close()
-    conn.close()
-    print("SUCCESS: TiDB Cloud Database successfully seeded with 5,000 assets and Table-per-Type structures!")
+    print("SUCCESS: Database fully populated!")
 
 if __name__ == "__main__":
     seed_enterprise_database()
