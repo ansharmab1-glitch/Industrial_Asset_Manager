@@ -1,0 +1,15 @@
+[theme]
+# The primary accent color (Deep Enterprise Blue)
+primaryColor = "#0068c9"
+
+# The main background color (Dark Slate)
+backgroundColor = "#0e1117"
+
+# The background color for sidebars and input widgets
+secondaryBackgroundColor = "#262730"
+
+# Text color (Off-White for readability)
+textColor = "#fafafa"
+
+# Font family
+font = "sans serif"
