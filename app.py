@@ -4,6 +4,24 @@ from dotenv import load_dotenv
 
 # Must be the first Streamlit command
 st.set_page_config(page_title="Industrial Asset Core", layout="wide")
+# Custom CSS to style the metric cards and hide the default Streamlit menu
+st.markdown("""
+<style>
+    /* Add a solid background, rounded corners, and a blue accent border to metrics */
+    div[data-testid="metric-container"] {
+        background-color: #262730;
+        border: 1px solid #4B4B4B;
+        padding: 5% 5% 5% 10%;
+        border-radius: 8px;
+        border-left: 0.5rem solid #0068c9;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Hide the default Streamlit hamburger menu and "Made with Streamlit" footer for a cleaner look */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 # Load the hidden environment variables
 load_dotenv()
