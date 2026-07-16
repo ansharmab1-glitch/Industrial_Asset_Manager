@@ -28,7 +28,7 @@ if "role" not in st.session_state:
     st.session_state["role"] = ""
 
 if not st.session_state["authenticated"]:
-    st.title("Enterprise Multi-Plant Management Hub")
+    st.title("Complex Management Hub")
     st.markdown("---")
     
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -69,7 +69,7 @@ else:
     
     h_col1, h_col2 = st.columns([4, 1])
     with h_col1:
-        st.title("Multi-Plant Asset and Maintenance Hub")
+        st.title("Complex Maintenance Hub")
     with h_col2:
         st.write(f"Logged in as: **{st.session_state['username']}** ({st.session_state['role']})")
         if st.button("Logout"):
@@ -85,7 +85,7 @@ else:
             "Plant Dashboard", 
             "Equipment Management", 
             "Ticket Management", 
-            "Unified Query System"
+            "Query System"
         ])
 
         with tab1:
