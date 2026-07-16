@@ -1,5 +1,6 @@
 import mysql.connector
 import os
+import certifi
 from dotenv import load_dotenv
 
 # Load the hidden environment variables
@@ -15,7 +16,8 @@ def get_db_connection():
         database="industrial_asset_tracker",
         # TiDB Serverless requires secure SSL connections
         ssl_verify_cert=True,
-        ssl_verify_identity=True
+        ssl_verify_identity=True,
+        ssl_ca=certifi.where()
     )
     return conn
 
