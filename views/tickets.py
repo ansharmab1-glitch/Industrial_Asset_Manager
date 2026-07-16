@@ -40,7 +40,7 @@ def render_ticket_management(conn, cursor):
                     t_id = ticket_map[selected_ticket]
                     a_id = df_open.loc[df_open['ticket_id'] == t_id, 'asset_id'].values[0]
                     cursor.execute("UPDATE tickets SET status = 'Closed' WHERE ticket_id = %s", (t_id,))
-                    cursor.execute("UPDATE assets SET status = 'Operational' WHERE asset_id = %s", (a_id,))
+                    cursor.execute("UPDATE assets SET status = 'Operational' WHERE asset_id = %s", int((a_id,)))
                     conn.commit()
                     st.success(f"Ticket #{t_id} Closed. Asset returned to Operational status.")
                     time.sleep(1.5)
