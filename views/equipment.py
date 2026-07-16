@@ -51,6 +51,7 @@ def render_equipment_management(conn, cursor):
                 cursor.execute(query, tuple(vals))
                 conn.commit()
                 st.success(f"SUCCESS: {asset_name} deployed to {selected_plant} with all engineering specifications attached!")
+                st.rerun()
             else:
                 st.warning("Equipment requires a valid identifier name.")
     
